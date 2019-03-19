@@ -1,0 +1,96 @@
+import urllib3
+import certifi
+import json
+from pysl import resources
+
+class SLClient:
+    def __init__(self,
+                 type_ahead_key: str = None,
+                 realtime_departures_key: str = None,
+                 server_addr: str = 'https://api.sl.se'):
+
+        if type_ahead_key:
+            self.type_ahead = TypeAheadAPI(server_addr, type_ahead_key)
+
+        if realtime_departures_key:
+            self.realtime_departures = RealtimeDeparturesAPI(server_addr, realtime_departures_key)
+
+    def find_stop(self, search_string):
+        return self.type_ahead.search(search_string)
+
+    def get_realtime_departures(self, stop_id, time_window):
+        return self.realtime_departures.search(stop_id, time_window)
+
+
+class BaseAPI:
+    URL_TEMPLATE: str = '{server}/api2/{endpoint}.json?{request_args}'
+
+    def __init__(self, server: str, api_key: str, data_objects: list = []):
+        self._server = server
+        self._options = dict(key=api_key)
+        self._http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        self._raw = None
+        self._data_objects = [resources.general.ResponseEnvelope] + data_objects
+
+    def _hook(self, dct):
+        for data_object in self._data_objects:
+            if set(data_object.__annotations__).issuperset(set(dct)):
+                return data_object(**dct)
+
+        return dct
+
+    def _get_url(self, extra_options: dict) -> str:
+        options = {**self._options, **extra_options}
+        request_args = urllib3.request.urlencode(options)
+        return self.URL_TEMPLATE.format(server=self._server,
+                                        endpoint=self.ENDPOINT,
+                                        request_args=request_args)
+
+    def _make_request(self, http_method='GET', **query):
+        filtered_query = {k: v for k, v in query.items() if v is not None}
+        url = self._get_url(filtered_query)
+        print(url)
+        request = self._http.request(http_method, url)
+        data = json.loads(request.data, object_hook=self._hook)
+
+        return data
+
+class TypeAheadAPI(BaseAPI):
+    ENDPOINT: str = 'typeahead'
+    def __init__(self, server: str, api_key: str):
+        super().__init__(server, api_key, resources.type_ahead.__all__)
+
+    def search(self,
+               search_string: str,
+               stations_only: bool = None,
+               max_results: int = None,
+               site_type: str = None):
+        results = self._make_request(SearchString=search_string,
+                                     StationsOnly=stations_only,
+                                     MaxResults=max_results,
+                                     Type=site_type)
+        return results
+
+
+class RealtimeDeparturesAPI(BaseAPI):
+    ENDPOINT: str = 'realtimedeparturesV4'
+    def __init__(self, server: str, api_key: str):
+        super().__init__(server, api_key, resources.realtime_departures.__all__)
+
+    def search(self,
+               site_id: int,
+               time_window: int,
+               include_bus: bool = None,
+               include_metro: bool = None,
+               include_train: bool = None,
+               include_tram: bool = None,
+               include_ship: bool = None):
+
+        results = self._make_request(SiteId=site_id,
+                                     TimeWindow=time_window,
+                                     Bus=include_bus,
+                                     Metro=include_metro,
+                                     Train=include_train,
+                                     Tram=include_tram,
+                                     Ship=include_ship)
+        return results
