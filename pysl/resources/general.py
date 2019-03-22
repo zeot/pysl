@@ -7,5 +7,5 @@ class Resource:
 class ResponseEnvelope(Resource):
     StatusCode: int
     Message: str
-    ExecutionTime: int
-    ResponseData: list
+    ExecutionTime: int = None
+    ResponseData: list = None

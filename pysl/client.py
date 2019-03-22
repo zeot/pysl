@@ -2,7 +2,10 @@ import urllib3
 import certifi
 import json
 from pysl import resources
-from pysl.exceptions import APINotInitializedError
+from pysl.exceptions import (APINotInitializedError,
+                             APIKeyUndefinedError,
+                             APIKeyInvalidError,
+                             APIUnavailableError)
 
 class SLClient:
     def __init__(self,
@@ -65,11 +68,18 @@ class BaseAPI:
     def _make_request(self, http_method='GET', **query):
         filtered_query = {k: v for k, v in query.items() if v is not None}
         url = self._get_url(filtered_query)
-        print(url)
         request = self._http.request(http_method, url)
         data = json.loads(request.data, object_hook=self._hook)
 
-        return data
+        if data.StatusCode == 0:
+            return data
+        if data.StatusCode == 1001:
+            raise APIKeyUndefinedError(data.Message)
+        if data.StatusCode == 1002:
+            raise APIKeyInvalidError(data.Message)
+        if data.StatusCode == 1003:
+            raise APIUnavailableError(data.Message)
+
 
 class TypeAheadAPI(BaseAPI):
     ENDPOINT: str = 'typeahead'
@@ -85,6 +95,7 @@ class TypeAheadAPI(BaseAPI):
                                      StationsOnly=stations_only,
                                      MaxResults=max_results,
                                      Type=site_type)
+
         return results
 
 
