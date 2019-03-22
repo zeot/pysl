@@ -30,11 +30,11 @@ class SLClient:
         return self._realtime_departures_api.search(stop_id, time_window)
 
     def init_type_ahead(self, api_key):
-        self._type_ahead_api = TypeAheadAPI(self._server_addr, type_ahead_key)
+        self._type_ahead_api = TypeAheadAPI(self._server_addr, api_key)
 
     def init_realtime_departures(self, api_key):
         self._realtime_departures_api = RealtimeDeparturesAPI(self._server_addr,
-                                                              realtime_departures_key)
+                                                              api_key)
 
 
 class BaseAPI:
