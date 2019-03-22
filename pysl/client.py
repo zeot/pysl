@@ -2,27 +2,41 @@ import urllib3
 import certifi
 import json
 from pysl import resources
+from pysl.exceptions import APINotInitializedError
 
 class SLClient:
     def __init__(self,
                  type_ahead_key: str = None,
                  realtime_departures_key: str = None,
                  server_addr: str = 'https://api.sl.se'):
+        self._type_ahead_api: TypeAheadAPI = None
+        self._realtime_departures_api: RealtimeDeparturesAPI = None
 
         if type_ahead_key:
-            self.type_ahead = TypeAheadAPI(server_addr, type_ahead_key)
+            self.init_type_ahead(type_ahead_key)
 
         if realtime_departures_key:
-            self.realtime_departures = RealtimeDeparturesAPI(server_addr, realtime_departures_key)
+            self.init_realtime_departures(realtime_departures_key)
 
-    def find_stop(self, search_string):
-        return self.type_ahead.search(search_string)
+    def type_ahead(self, search_string):
+        if self._type_ahead_api is None:
+            raise APINotInitializedError('TypeAheadAPI not yet initialized.')
+        return self._type_ahead_api.search(search_string)
 
-    def get_realtime_departures(self, stop_id, time_window):
-        return self.realtime_departures.search(stop_id, time_window)
+    def realtime_departures(self, stop_id, time_window):
+        if self._realtime_departures_api is None:
+            raise APINotInitializedError('RealtimeDeparturesAPI not yet initialized.')
+        return self._realtime_departures_api.search(stop_id, time_window)
+
+    def init_type_ahead(self, api_key):
+        self._type_ahead_api = TypeAheadAPI(server_addr, type_ahead_key)
+
+    def init_realtime_departures(self, api_key):
+        self._realtime_departures_api = RealtimeDeparturesAPI(server_addr, realtime_departures_key)
 
 
 class BaseAPI:
+    """ Base class for all SL APIs """
     URL_TEMPLATE: str = '{server}/api2/{endpoint}.json?{request_args}'
 
     def __init__(self, server: str, api_key: str, data_objects: list = []):

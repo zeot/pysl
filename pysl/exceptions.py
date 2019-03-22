@@ -1,0 +1,2 @@
+class APINotInitializedError(Exception):
+    """"""
