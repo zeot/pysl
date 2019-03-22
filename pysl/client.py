@@ -9,6 +9,7 @@ class SLClient:
                  type_ahead_key: str = None,
                  realtime_departures_key: str = None,
                  server_addr: str = 'https://api.sl.se'):
+        self._server_addr = server_addr
         self._type_ahead_api: TypeAheadAPI = None
         self._realtime_departures_api: RealtimeDeparturesAPI = None
 
@@ -29,10 +30,11 @@ class SLClient:
         return self._realtime_departures_api.search(stop_id, time_window)
 
     def init_type_ahead(self, api_key):
-        self._type_ahead_api = TypeAheadAPI(server_addr, type_ahead_key)
+        self._type_ahead_api = TypeAheadAPI(self._server_addr, type_ahead_key)
 
     def init_realtime_departures(self, api_key):
-        self._realtime_departures_api = RealtimeDeparturesAPI(server_addr, realtime_departures_key)
+        self._realtime_departures_api = RealtimeDeparturesAPI(self._server_addr,
+                                                              realtime_departures_key)
 
 
 class BaseAPI:
