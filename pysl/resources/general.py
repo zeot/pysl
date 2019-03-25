@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 
 class Resource:
-    pass
+    def __post_init__(self):
+        for attr_name, data_type in self.__annotations__.items():
+            if data_type is datetime and not isinstance(getattr(self, attr_name), data_type):
+                setattr(self, attr_name, datetime.fromisoformat(getattr(self, attr_name)))
 
 @dataclass
 class ResponseEnvelope(Resource):
