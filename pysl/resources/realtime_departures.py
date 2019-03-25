@@ -16,18 +16,19 @@ class RealtimeDepartures(general.Resource):
 @dataclass
 class Transport(general.Resource):
     TransportMode: str
-    LineNumber: str
-    Destination: str
-    JourneyDirection: int
-    GroupofLine: str
+    GroupOfLine: str
     StopAreaName: str
     StopAreaNumber: int
-    StopPointDesignation: str
-    TimeTabledDateTime: datetime
-    ExpectedDateTime: datetime
-    DisplayTime: str
-    JourneyNumber: int
-    Deviations: list
+    LineNumber: str = None
+    Destination: str = None
+    JourneyDirection: int = None
+    StopPointDesignation: str = None
+    StopPointNumber: int = None
+    TimeTabledDateTime: datetime = None
+    ExpectedDateTime: datetime = None
+    DisplayTime: str = None
+    JourneyNumber: int = None
+    Deviations: list = None
     SecondaryDestinationName: str = None
 
 @dataclass
