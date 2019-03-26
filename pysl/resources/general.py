@@ -4,8 +4,13 @@ from datetime import datetime
 class Resource:
     def __post_init__(self):
         for attr_name, data_type in self.__annotations__.items():
-            if data_type is datetime and isinstance(getattr(self, attr_name), str):
-                setattr(self, attr_name, datetime.fromisoformat(getattr(self, attr_name)))
+            attr = getattr(self, attr_name)
+            if attr is None:
+                continue
+            if data_type is datetime and isinstance(attr, str):
+                setattr(self, attr_name, datetime.fromisoformat(attr))
+            elif data_type in {int, str, bool, float} and not isinstance(attr, data_type):
+                setattr(self, attr_name, data_type(attr))
 
 @dataclass
 class ResponseEnvelope(Resource):
