@@ -72,7 +72,7 @@ class BaseAPI:
         data = json.loads(request.data, object_hook=self._hook)
 
         if data.StatusCode == 0:
-            return data
+            return data.ResponseData
         if data.StatusCode == 1001:
             raise APIKeyUndefinedError(data.Message)
         if data.StatusCode == 1002:
