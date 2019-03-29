@@ -44,12 +44,13 @@ class BaseAPI:
     """ Base class for all SL APIs """
     URL_TEMPLATE: str = '{server}/api2/{endpoint}.json?{request_args}'
 
-    def __init__(self, server: str, api_key: str, data_objects: list = []):
+    def __init__(self, server: str, api_key: str):
         self._server = server
         self._options = dict(key=api_key)
         self._http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         self._raw = None
-        self._data_objects = [resources.general.ResponseEnvelope] + data_objects
+        data_objects_module = getattr(resources, DATA_OBJECTS_MODULE)
+        self._data_objects = [resources.general.ResponseEnvelope] + getattr(data_objects_module, '__all__')
 
     def _hook(self, dct):
         for data_object in self._data_objects:
@@ -83,6 +84,8 @@ class BaseAPI:
 
 class TypeAheadAPI(BaseAPI):
     ENDPOINT: str = 'typeahead'
+    DATA_OBJECTS_MODULE:str = 'type_ahead'
+
     def __init__(self, server: str, api_key: str):
         super().__init__(server, api_key, resources.type_ahead.__all__)
 
@@ -101,8 +104,7 @@ class TypeAheadAPI(BaseAPI):
 
 class RealtimeDeparturesAPI(BaseAPI):
     ENDPOINT: str = 'realtimedeparturesV4'
-    def __init__(self, server: str, api_key: str):
-        super().__init__(server, api_key, resources.realtime_departures.__all__)
+    DATA_OBJECTS_MODULE:str = 'realtime_departures'
 
     def search(self,
                site_id: int,
@@ -121,3 +123,20 @@ class RealtimeDeparturesAPI(BaseAPI):
                                      Tram=include_tram,
                                      Ship=include_ship)
         return results
+
+class TripAPI(BaseAPI):
+    ENDPOINT:str = 'travelplannerV3_1/trip'
+    DATA_OBJECTS_MODULE: str = 'trip'
+
+    def search(self,
+               lang: str = None,
+               origin_id: int = None,
+               origin_ext_id: str = None,
+               origin_coord_lat: str = None,
+               origin_coord_long: str = None,
+               dest_id: int = None,
+               dest_ext_id: str = None,
+               dest_coord_lat: str = None,
+               dest_coord_long: str = None,
+               via: str = None,
+               viaid: int = None
